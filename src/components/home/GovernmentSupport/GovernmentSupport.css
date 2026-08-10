@@ -1,0 +1,197 @@
+.government-support {
+  padding: 90px 30px;
+  background: #ffffff;
+}
+
+.government-container {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 70px;
+  align-items: center;
+}
+
+.government-content {
+  max-width: 700px;
+}
+
+.government-tag {
+  display: inline-block;
+  margin-bottom: 16px;
+
+  color: #6b8e23;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.government-content h2 {
+  margin: 0 0 20px;
+
+  color: #172b1f;
+  font-size: 42px;
+  line-height: 1.25;
+}
+
+.government-content h2 span {
+  color: #b58a00;
+}
+
+.government-content > p {
+  margin: 0 0 35px;
+
+  color: #626b64;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.government-points {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.government-point {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+
+  background: #f7f9f7;
+  border: 1px solid #e2e7e2;
+  border-radius: 10px;
+}
+
+.point-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f4f1df;
+  border-radius: 50%;
+
+  font-size: 22px;
+}
+
+.government-point h3 {
+  margin: 0 0 7px;
+
+  color: #172b1f;
+  font-size: 17px;
+}
+
+.government-point p {
+  margin: 0;
+
+  color: #68716a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.government-box {
+  padding: 45px 35px;
+
+  text-align: center;
+
+  background: #172b1f;
+  border-radius: 18px;
+
+  box-shadow: 0 15px 35px rgba(23, 43, 31, 0.15);
+}
+
+.government-box-icon {
+  width: 75px;
+  height: 75px;
+
+  margin: 0 auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f4f1df;
+  border-radius: 50%;
+
+  font-size: 36px;
+}
+
+.government-box h3 {
+  margin: 0 0 15px;
+
+  color: #ffffff;
+  font-size: 28px;
+}
+
+.government-box p {
+  margin: 0;
+
+  color: #d9dfda;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.vision-line {
+  width: 55px;
+  height: 2px;
+
+  margin: 25px auto;
+  background: #b58a00;
+}
+
+.government-box strong {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.government-box span {
+  display: block;
+
+  color: #c5cec7;
+  font-size: 13px;
+}
+
+/* Tablet */
+
+@media (max-width: 900px) {
+  .government-container {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+
+  .government-content {
+    max-width: 100%;
+  }
+
+  .government-content h2 {
+    font-size: 38px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .government-support {
+    padding: 65px 20px;
+  }
+
+  .government-content h2 {
+    font-size: 32px;
+  }
+
+  .government-points {
+    grid-template-columns: 1fr;
+  }
+
+  .government-box {
+    padding: 35px 25px;
+  }
+}

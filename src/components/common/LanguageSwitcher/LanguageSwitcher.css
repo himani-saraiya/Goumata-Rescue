@@ -1,0 +1,36 @@
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.language-option {
+  padding: 6px 8px;
+
+  border: none;
+  background: transparent;
+
+  color: #6b786f;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
+}
+
+.language-option:hover {
+  color: #176b43;
+}
+
+.language-option.active {
+  color: #176b43;
+  font-weight: 700;
+}
+
+.language-divider {
+  color: #cbd5ce;
+  user-select: none;
+}
