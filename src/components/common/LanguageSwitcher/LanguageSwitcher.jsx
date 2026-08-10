@@ -9,11 +9,11 @@ const LanguageSwitcher = () => {
       <button
         type="button"
         className={`language-option ${
-          language === "en" ? "active" : ""
+          language === "hi" ? "active" : ""
         }`}
-        onClick={() => changeLanguage("en")}
+        onClick={() => changeLanguage("hi")}
       >
-        English
+        हिंदी
       </button>
 
       <span className="language-divider">|</span>
@@ -21,11 +21,11 @@ const LanguageSwitcher = () => {
       <button
         type="button"
         className={`language-option ${
-          language === "hi" ? "active" : ""
+          language === "en" ? "active" : ""
         }`}
-        onClick={() => changeLanguage("hi")}
+        onClick={() => changeLanguage("en")}
       >
-        हिंदी
+        English
       </button>
     </div>
   );

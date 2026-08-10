@@ -8,27 +8,34 @@ import HowItWorks from "./components/home/HowItWorks/HowItWorks";
 import RescueCases from "./pages/RescueCases/RescueCases";
 import Service from "./components/home/Service/Service";
 import GovernmentSupport from "./components/home/GovernmentSupport/GovernmentSupport";
+import ReportRescue from "./pages/ReportRescue/ReportRescue";
 
-function App() {
+const App = () => {
   return (
     <LanguageProvider>
       <div className="App">
+
         <Navbar />
 
         <Hero />
 
-        <About/>
+        <About />
 
         <HowItWorks />
 
         <RescueCases />
+
+        <ReportRescue />
+
         <Service />
-        <GovernmentSupport/>
+
+        <GovernmentSupport />
 
         <Footer />
+
       </div>
     </LanguageProvider>
   );
-}
+};
 
 export default App;

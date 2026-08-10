@@ -2,6 +2,16 @@ import "./Navbar.css";
 import LanguageSwitcher from "../LanguageSwitcher/LanguageSwitcher";
 
 const Navbar = () => {
+  const handleRescueClick = () => {
+    const rescueSection = document.getElementById("report-rescue");
+
+    if (rescueSection) {
+      rescueSection.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <header className="navbar">
       <div className="navbar-container">
@@ -25,8 +35,12 @@ const Navbar = () => {
         <div className="navbar-actions">
           <LanguageSwitcher />
 
-          <button type="button" className="rescue-button">
-            Report a Rescue
+          <button
+            type="button"
+            className="rescue-button"
+            onClick={handleRescueClick}
+          >
+            🚨 Report a Rescue
           </button>
         </div>
 
