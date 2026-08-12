@@ -1,12 +1,13 @@
 import { useState } from "react";
 import "./ReportRescue.css";
+import { useLanguage } from "../../context/LanguageContext";
 
 const ReportRescue = () => {
+    const { language } = useLanguage();
+    const isHindi = language === "hi";
+
     const [formData, setFormData] = useState({
-        name: "",
         phone: "",
-        situation: "",
-        urgency: "",
         location: "",
         description: "",
         photo: null,
@@ -14,6 +15,98 @@ const ReportRescue = () => {
 
     const [submitted, setSubmitted] = useState(false);
     const [caseId, setCaseId] = useState("");
+
+    const text = {
+        badge: isHindi ? "त्वरित गाय सहायता" : "Quick Cow Rescue",
+
+        title: isHindi
+            ? "गाय को तुरंत सहायता चाहिए?"
+            : "Cow Needs Immediate Help?",
+
+        introDescription: isHindi
+            ? "बस लोकेशन, गाय की फोटो और अपना मोबाइल नंबर साझा करें।"
+            : "Just share the location, cow photo and your mobile number.",
+
+        location: isHindi ? "गाय की लोकेशन" : "Cow Location",
+
+        useLocation: isHindi
+            ? "📍 मेरी वर्तमान लोकेशन इस्तेमाल करें"
+            : "📍 Use My Current Location",
+
+        locationPlaceholder: isHindi
+            ? "स्थान / पता दर्ज करें"
+            : "Enter location / address",
+
+        locationReceived: isHindi
+            ? "📍 वर्तमान लोकेशन प्राप्त"
+            : "📍 Current location received",
+
+        photo: isHindi ? "गाय की फोटो" : "Cow Photo",
+
+        photoHelp: isHindi
+            ? "गाय की वर्तमान स्थिति की फोटो अपलोड करें"
+            : "Upload a photo showing the current condition of the cow",
+
+        phone: isHindi ? "मोबाइल नंबर" : "Mobile Number",
+
+        phonePlaceholder: isHindi
+            ? "10 अंकों का मोबाइल नंबर"
+            : "10-digit mobile number",
+
+        description: isHindi
+            ? "छोटा विवरण"
+            : "Short Description",
+
+        optional: isHindi ? "(वैकल्पिक)" : "(Optional)",
+
+        descriptionPlaceholder: isHindi
+            ? "जैसे — गाय सड़क पर घायल है..."
+            : "Example — Cow is injured on the road...",
+
+        report: isHindi
+            ? "🚨 Rescue के लिए रिपोर्ट करें"
+            : "🚨 Report for Rescue",
+
+        successTitle: isHindi
+            ? "✅ Rescue Request प्राप्त हुई"
+            : "✅ Rescue Request Received",
+
+        successText: isHindi
+            ? "आपकी सहायता अनुरोध सफलतापूर्वक दर्ज हो गई है।"
+            : "Your rescue request has been successfully registered.",
+
+        caseText: isHindi
+            ? "आपकी Case ID:"
+            : "Your Case ID:",
+
+        saveText: isHindi
+            ? "कृपया इस Case ID को सुरक्षित रखें।"
+            : "Please keep this Case ID safe.",
+
+        locationError: isHindi
+            ? "Location प्राप्त नहीं हो सकी। कृपया location permission allow करें या स्थान manually दर्ज करें।"
+            : "Unable to get your location. Please allow location permission or enter the location manually.",
+
+        browserError: isHindi
+            ? "आपके browser में GPS location उपलब्ध नहीं है। कृपया स्थान manually दर्ज करें।"
+            : "GPS location is not available in your browser. Please enter the location manually.",
+
+        phoneError: isHindi
+            ? "कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।"
+            : "Please enter a valid 10-digit mobile number.",
+
+        locationErrorRequired: isHindi
+            ? "कृपया location दर्ज करें या अपनी current location इस्तेमाल करें।"
+            : "Please enter the location or use your current location.",
+
+        photoError: isHindi
+            ? "कृपया गाय की फोटो अपलोड करें।"
+            : "Please upload a photo of the cow.",
+
+        photoSelected: isHindi
+            ? "📷 फोटो चुनी गई"
+            : "📷 Photo selected",
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -24,58 +117,35 @@ const ReportRescue = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
-  e.preventDefault();
-
-  const phoneRegex = /^[6-9][0-9]{9}$/;
-
-  if (!phoneRegex.test(formData.phone)) {
-    alert("कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।");
-    return;
-  }
-
-  const generatedCaseId = `GR-${Math.floor(
-    100000 + Math.random() * 900000
-  )}`;
-
-  setCaseId(generatedCaseId);
-  setSubmitted(true);
-
-  console.log("Rescue Report:", {
-    ...formData,
-    caseId: generatedCaseId,
-  });
-
-  // Form clear
-  setFormData({
-    name: "",
-    phone: "",
-    situation: "",
-    urgency: "",
-    location: "",
-    description: "",
-    photo: null,
-  });
-};
     const handleLocation = () => {
         if (!navigator.geolocation) {
-            alert("आपके browser में location सुविधा उपलब्ध नहीं है।");
+            alert(text.browserError);
             return;
         }
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                const { latitude, longitude } = position.coords;
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                const gpsLocation =
+                    "GPS: " +
+                    latitude.toFixed(6) +
+                    ", " +
+                    longitude.toFixed(6);
 
                 setFormData((prev) => ({
                     ...prev,
-                    location: `${latitude}, ${longitude}`,
+                    location: gpsLocation,
                 }));
             },
             () => {
-                alert(
-                    "Location प्राप्त नहीं हो सकी। कृपया location permission allow करें।"
-                );
+                alert(text.locationError);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
             }
         );
     };
@@ -89,36 +159,113 @@ const ReportRescue = () => {
         }));
     };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const phoneRegex = /^[6-9][0-9]{9}$/;
+
+        if (!formData.location.trim()) {
+            alert(text.locationErrorRequired);
+            return;
+        }
+
+        if (!formData.photo) {
+            alert(text.photoError);
+            return;
+        }
+
+        if (!phoneRegex.test(formData.phone)) {
+            alert(text.phoneError);
+            return;
+        }
+
+        try {
+            const formDataToSend = new FormData();
+
+            formDataToSend.append("phone", formData.phone);
+            formDataToSend.append("location", formData.location);
+            formDataToSend.append("description", formData.description);
+            formDataToSend.append("photo", formData.photo);
+
+            console.log("SENDING RESCUE DATA:", {
+                phone: formData.phone,
+                location: formData.location,
+                description: formData.description,
+                photo: formData.photo.name,
+            });
+
+            const response = await fetch(
+                "http://localhost:5000/api/rescue",
+                {
+                    method: "POST",
+                    body: formDataToSend,
+                }
+            );
+
+            const data = await response.json();
+
+            console.log("BACKEND RESPONSE:", data);
+
+            if (!response.ok) {
+                alert(
+                    data.message ||
+                    "Rescue request submit नहीं हो सकी।"
+                );
+                return;
+            }
+
+            const generatedCaseId = data.case.case_id;
+
+            setCaseId(generatedCaseId);
+            setSubmitted(true);
+
+            console.log("RESCUE SAVED:", data);
+
+            setFormData({
+                phone: "",
+                location: "",
+                description: "",
+                photo: null,
+            });
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+            });
+
+        } catch (error) {
+            console.error("RESCUE SUBMIT ERROR:", error);
+
+            alert(
+                "Server से connection नहीं हो सका। कृपया थोड़ी देर बाद फिर कोशिश करें।"
+            );
+        }
+    };
+
+
     return (
         <section className="report-rescue-page" id="report-rescue">
             <div className="report-rescue-container">
 
                 <div className="report-rescue-header">
-                    <span>गाय सहायता रिपोर्ट</span>
+                    <span>{text.badge}</span>
 
-                    <h1>
-                        जरूरतमंद गाय की
-                        <span> तुरंत सूचना दें</span>
-                    </h1>
+                    <h1>{text.title}</h1>
 
-                    <p>
-                        अगर आपको कहीं बीमार, घायल, दुर्घटनाग्रस्त, बेसहारा
-                        या मृत गाय दिखाई दे, तो उसकी जानकारी साझा करें।
-                    </p>
+                    <p>{text.introDescription}</p>
                 </div>
+
                 {submitted && (
                     <div className="report-success">
-                        <h2>✅ आपकी सूचना सफलतापूर्वक प्राप्त हुई</h2>
+                        <h2>{text.successTitle}</h2>
 
-                        <p>
-                            आपकी Rescue Request दर्ज कर ली गई है।
-                        </p>
+                        <p>{text.successText}</p>
 
-                        <strong>Case ID: {caseId}</strong>
+                        <strong>
+                            {text.caseText} {caseId}
+                        </strong>
 
-                        <p>
-                            कृपया इस Case ID को सुरक्षित रखें।
-                        </p>
+                        <p>{text.saveText}</p>
                     </div>
                 )}
 
@@ -127,162 +274,41 @@ const ReportRescue = () => {
                     onSubmit={handleSubmit}
                 >
 
-                    {/* Name */}
-                    <div className="form-group">
-                        <label htmlFor="name">
-                            आपका नाम <span>(वैकल्पिक)</span>
-                        </label>
-
-                        <input
-                            id="name"
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="अपना नाम दर्ज करें"
-                        />
-                    </div>
-
-                    {/* Phone */}
-                    <div className="form-group">
-                        <label htmlFor="phone">
-                            मोबाइल नंबर <span>*</span>
-                        </label>
-
-                        <input
-                            id="phone"
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="10 अंकों का मोबाइल नंबर"
-                            required
-                        />
-                    </div>
-
-                    {/* Situation */}
-                    <div className="form-group">
-                        <label htmlFor="situation">
-                            गाय की स्थिति <span>*</span>
-                        </label>
-
-                        <select
-                            id="situation"
-                            name="situation"
-                            value={formData.situation}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">
-                                स्थिति चुनें
-                            </option>
-
-                            <option value="injured">
-                                घायल / दुर्घटनाग्रस्त
-                            </option>
-
-                            <option value="sick">
-                                बीमार
-                            </option>
-
-                            <option value="roadside">
-                                सड़क पर बेसहारा
-                            </option>
-
-                            <option value="abandoned">
-                                छोड़ी हुई गाय
-                            </option>
-
-                            <option value="dead">
-                                मृत गाय
-                            </option>
-
-                            <option value="other">
-                                अन्य
-                            </option>
-                        </select>
-                    </div>
-
-                    {/* Urgency */}
-                    <div className="form-group">
-                        <label htmlFor="urgency">
-                            सहायता की प्राथमिकता <span>*</span>
-                        </label>
-
-                        <select
-                            id="urgency"
-                            name="urgency"
-                            value={formData.urgency}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">
-                                प्राथमिकता चुनें
-                            </option>
-
-                            <option value="critical">
-                                🔴 अति आवश्यक — तुरंत सहायता चाहिए
-                            </option>
-
-                            <option value="urgent">
-                                🟠 जरूरी — जल्द सहायता चाहिए
-                            </option>
-
-                            <option value="normal">
-                                🟢 सामान्य — सहायता आवश्यक है
-                            </option>
-                        </select>
-                    </div>
-
-                    {/* Location */}
+                    {/* LOCATION */}
                     <div className="form-group">
                         <label htmlFor="location">
-                            स्थान <span>*</span>
+                            {text.location} <span>*</span>
                         </label>
-
-                        <input
-                            id="phone"
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="10 अंकों का मोबाइल नंबर"
-                            maxLength="10"
-                            pattern="[6-9][0-9]{9}"
-                            inputMode="numeric"
-                            required
-                        />
 
                         <button
                             type="button"
                             className="location-button"
                             onClick={handleLocation}
                         >
-                            📍 मेरी वर्तमान लोकेशन इस्तेमाल करें
+                            {text.useLocation}
                         </button>
-                    </div>
 
-                    {/* Description */}
-                    <div className="form-group">
-                        <label htmlFor="description">
-                            स्थिति का विवरण <span>*</span>
-                        </label>
-
-                        <textarea
-                            id="description"
-                            name="description"
-                            value={formData.description}
+                        <input
+                            id="location"
+                            type="text"
+                            name="location"
+                            value={formData.location}
                             onChange={handleChange}
-                            placeholder="गाय की स्थिति के बारे में संक्षिप्त जानकारी दें..."
-                            rows="5"
+                            placeholder={text.locationPlaceholder}
                             required
                         />
+
+                        {formData.location && (
+                            <small className="location-success">
+                                {text.locationReceived}: {formData.location}
+                            </small>
+                        )}
                     </div>
 
-                    {/* Photo */}
+                    {/* PHOTO */}
                     <div className="form-group">
                         <label htmlFor="photo">
-                            गाय की फोटो <span>(वैकल्पिक)</span>
+                            {text.photo} <span>*</span>
                         </label>
 
                         <input
@@ -291,23 +317,63 @@ const ReportRescue = () => {
                             name="photo"
                             accept="image/*"
                             onChange={handlePhotoChange}
+                            required
                         />
 
-                        <small>
-                            अगर संभव हो तो गाय की वर्तमान स्थिति की फोटो साझा करें।
-                        </small>
+                        <small>{text.photoHelp}</small>
+
+                        {formData.photo && (
+                            <small className="photo-selected">
+                                {text.photoSelected}: {formData.photo.name}
+                            </small>
+                        )}
                     </div>
 
-                    {/* Submit */}
+                    {/* MOBILE */}
+                    <div className="form-group">
+                        <label htmlFor="phone">
+                            {text.phone} <span>*</span>
+                        </label>
+
+                        <input
+                            id="phone"
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder={text.phonePlaceholder}
+                            maxLength="10"
+                            pattern="[6-9][0-9]{9}"
+                            inputMode="numeric"
+                            required
+                        />
+                    </div>
+
+                    {/* DESCRIPTION */}
+                    <div className="form-group">
+                        <label htmlFor="description">
+                            {text.description} <span>{text.optional}</span>
+                        </label>
+
+                        <textarea
+                            id="description"
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            placeholder={text.descriptionPlaceholder}
+                            rows="4"
+                        />
+                    </div>
+
+                    {/* SUBMIT */}
                     <button
                         type="submit"
                         className="report-submit-button"
                     >
-                        🚨 सहायता के लिए रिपोर्ट करें
+                        {text.report}
                     </button>
 
                 </form>
-
             </div>
         </section>
     );

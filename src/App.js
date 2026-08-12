@@ -1,41 +1,62 @@
-import "./App.css";
 import { LanguageProvider } from "./context/LanguageContext";
+
 import Navbar from "./components/common/Navbar/Navbar";
 import Hero from "./components/home/Hero/Hero";
-import Footer from "./components/common/Footer/Footer";
 import About from "./pages/About/About";
 import HowItWorks from "./components/home/HowItWorks/HowItWorks";
 import RescueCases from "./pages/RescueCases/RescueCases";
+import ReportRescue from "./pages/ReportRescue/ReportRescue";
 import Service from "./components/home/Service/Service";
 import GovernmentSupport from "./components/home/GovernmentSupport/GovernmentSupport";
-import ReportRescue from "./pages/ReportRescue/ReportRescue";
+import Footer from "./components/common/Footer/Footer";
 
-const App = () => {
+function App() {
   return (
     <LanguageProvider>
-      <div className="App">
+      <div className="app">
 
+        {/* Navbar */}
         <Navbar />
 
-        <Hero />
+        {/* Home */}
+        <section id="home">
+          <Hero />
+        </section>
 
-        <About />
+        {/* About */}
+        <section id="about">
+          <About />
+        </section>
 
+        {/* How It Works */}
         <HowItWorks />
 
-        <RescueCases />
+        {/* Rescue Cases */}
+        <section id="rescues">
+          <RescueCases />
+        </section>
 
-        <ReportRescue />
+        {/* Report Rescue */}
+        <section id="report-rescue">
+          <ReportRescue />
+        </section>
 
-        <Service />
+        {/* Services */}
+        <section id="services">
+          <Service />
+        </section>
 
+        {/* Government Support */}
         <GovernmentSupport />
 
-        <Footer />
+        {/* Footer / Contact */}
+        <section id="contact">
+          <Footer />
+        </section>
 
       </div>
     </LanguageProvider>
   );
-};
+}
 
 export default App;
