@@ -5,15 +5,26 @@ require("dotenv").config();
 const { Pool } = require("pg");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
-const fs = require("fs");
+
+const PORT = process.env.PORT || 5000;
+
+// ===============================
+// Upload Folder
+// ===============================
 
 const uploadDir = path.join(__dirname, "uploads");
 
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+// ===============================
+// Multer Configuration
+// ===============================
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);
@@ -21,7 +32,9 @@ const storage = multer.diskStorage({
 
     filename: (req, file, cb) => {
         const uniqueName =
-            Date.now() + "-" + file.originalname.replace(/\s+/g, "-");
+            Date.now() +
+            "-" +
+            file.originalname.replace(/\s+/g, "-");
 
         cb(null, uniqueName);
     },
@@ -30,9 +43,6 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage,
 });
-app.use("/uploads", express.static(uploadDir));
-
-const PORT = process.env.PORT || 5000;
 
 // ===============================
 // PostgreSQL Connection
@@ -56,6 +66,12 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+// Uploaded photos accessible through /uploads
+app.use(
+    "/uploads",
+    express.static(uploadDir)
+);
+
 // ===============================
 // DB Config Check
 // ===============================
@@ -65,7 +81,10 @@ console.log("USER:", process.env.DB_USER);
 console.log("HOST:", process.env.DB_HOST);
 console.log("DATABASE:", process.env.DB_NAME);
 console.log("PORT:", process.env.DB_PORT);
-console.log("PASSWORD EXISTS:", !!process.env.DB_PASSWORD);
+console.log(
+    "PASSWORD EXISTS:",
+    !!process.env.DB_PASSWORD
+);
 
 // ===============================
 // Basic Route
@@ -82,76 +101,32 @@ app.get("/", (req, res) => {
 // Database Health Check
 // ===============================
 
-app.post("/api/rescue", upload.single("photo"), async (req, res) => {
+app.get("/api/health", async (req, res) => {
     try {
-        console.log("========== RESCUE REQUEST ==========");
+        const result = await pool.query("SELECT NOW()");
 
-        const { phone, location, description } = req.body;
-
-        const photoUrl = req.file
-            ? `/uploads/${req.file.filename}`
-            : null;
-
-        console.log("RESCUE DATA RECEIVED:", {
-            phone,
-            location,
-            description,
-            photoUrl,
-        });
-
-        // Basic validation
-        if (!phone || !location || !photoUrl) {
-            return res.status(400).json({
-                success: false,
-                message: "Phone, location and photo are required.",
-            });
-        }
-
-        // Generate Case ID
-        const caseId =
-            "GR-" + Math.floor(100000 + Math.random() * 900000);
-
-        // Save into PostgreSQL
-        const result = await pool.query(
-            `
-            INSERT INTO public.rescue_cases
-            (
-                case_id,
-                phone,
-                location,
-                description,
-                photo_url,
-                status
-            )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-            `,
-            [
-                caseId,
-                phone,
-                location,
-                description || "",
-                photoUrl,
-                "Reported",
-            ]
-        );
-
-        console.log("RESCUE SAVED:", result.rows[0]);
-
-        res.status(201).json({
+        res.json({
             success: true,
-            message: "Rescue case registered successfully.",
-            case: result.rows[0],
+            status: "OK",
+            database: "Connected",
+            time: result.rows[0].now,
         });
 
     } catch (error) {
-        console.error("RESCUE API ERROR:", error);
+
+        console.error(
+            "DATABASE ERROR:",
+            error
+        );
 
         res.status(500).json({
             success: false,
+            status: "ERROR",
+            database: "Not Connected",
             message:
                 error.message ||
-                "Failed to create rescue case.",
+                "Unknown database error",
+            code: error.code || null,
         });
     }
 });
@@ -160,85 +135,172 @@ app.post("/api/rescue", upload.single("photo"), async (req, res) => {
 // Rescue API
 // ===============================
 
-app.post("/api/rescue", async (req, res) => {
-    try {
-        console.log("========== RESCUE REQUEST ==========");
-        console.log("BODY:", req.body);
-        console.log("====================================");
+// ===============================
+// Rescue API
+// ===============================
 
-        const {
-            phone,
-            location,
-            description,
-            photoUrl,
-        } = req.body;
+app.post(
+    "/api/rescue",
+    upload.single("photo"),
+    async (req, res) => {
 
-        console.log("RESCUE DATA RECEIVED:", {
-            phone,
-            location,
-            description,
-            photoUrl,
-        });
+        try {
 
-        // Validation
-        if (!phone || !location || !photoUrl) {
-            return res.status(400).json({
-                success: false,
-                message: "Phone, location and photo are required.",
-            });
-        }
+            console.log(
+                "========== RESCUE REQUEST =========="
+            );
 
-        // Generate Case ID
-        const caseId =
-            "GR-" + Math.floor(100000 + Math.random() * 900000);
-
-        // Save into PostgreSQL
-        const result = await pool.query(
-            `
-      INSERT INTO public.rescue_cases
-      (
-        case_id,
-        phone,
-        location,
-        description,
-        photo_url,
-        status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-      `,
-            [
-                caseId,
+            const {
                 phone,
                 location,
-                description || "",
-                photoUrl,
-                "Reported",
-            ]
-        );
+                latitude,
+                longitude,
+                description,
+            } = req.body;
 
-        console.log("RESCUE SAVED:", result.rows[0]);
+            const photoUrl = req.file
+                ? `/uploads/${req.file.filename}`
+                : null;
 
-        res.status(201).json({
+            // Google Maps URL
+            const mapUrl =
+                latitude && longitude
+                    ? `https://www.google.com/maps?q=${latitude},${longitude}`
+                    : null;
+
+            console.log(
+                "RESCUE DATA RECEIVED:",
+                {
+                    phone,
+                    location,
+                    latitude,
+                    longitude,
+                    description,
+                    photoUrl,
+                    mapUrl,
+                }
+            );
+
+            // ===============================
+            // Validation
+            // ===============================
+
+            if (
+                !phone ||
+                !location ||
+                !photoUrl
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Phone, location and photo are required.",
+                });
+            }
+
+            // ===============================
+            // Generate Case ID
+            // ===============================
+
+            const caseId =
+                "GR-" +
+                Math.floor(
+                    100000 +
+                    Math.random() * 900000
+                );
+
+            // ===============================
+            // Save into PostgreSQL
+            // ===============================
+
+            const result =
+                await pool.query(
+                    `
+                    INSERT INTO public.rescue_cases
+                    (
+                        case_id,
+                        phone,
+                        location,
+                        latitude,
+                        longitude,
+                        description,
+                        photo_url,
+                        map_url,
+                        status
+                    )
+                    VALUES
+                    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    RETURNING *
+                    `,
+                    [
+                        caseId,
+                        phone,
+                        location,
+                        latitude || null,
+                        longitude || null,
+                        description || "",
+                        photoUrl,
+                        mapUrl,
+                        "Reported",
+                    ]
+                );
+
+            console.log(
+                "RESCUE SAVED:",
+                result.rows[0]
+            );
+
+            // ===============================
+            // Send Response
+            // ===============================
+
+            res.status(201).json({
+                success: true,
+                message:
+                    "Rescue case registered successfully.",
+
+                case: result.rows[0],
+            });
+
+        } catch (error) {
+
+            console.error(
+                "RESCUE API ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                message:
+                    error.message ||
+                    "Failed to create rescue case.",
+            });
+        }
+    }
+);
+
+app.get("/api/rescue", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT *
+            FROM public.rescue_cases
+            ORDER BY created_at DESC
+        `);
+
+        res.json({
             success: true,
-            message: "Rescue case registered successfully.",
-            case: result.rows[0],
+            cases: result.rows,
         });
 
     } catch (error) {
-        console.error("RESCUE API ERROR:", error);
+        console.error("GET RESCUE CASES ERROR:", error);
 
         res.status(500).json({
             success: false,
-            message:
-                error.message || "Failed to create rescue case.",
+            message: error.message,
         });
     }
 });
-
-// ===============================
-// Start Server
-// ===============================
 
 app.listen(PORT, () => {
     console.log(

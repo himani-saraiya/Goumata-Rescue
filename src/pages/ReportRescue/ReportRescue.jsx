@@ -9,15 +9,20 @@ const ReportRescue = () => {
     const [formData, setFormData] = useState({
         phone: "",
         location: "",
+        latitude: null,
+        longitude: null,
         description: "",
         photo: null,
     });
 
     const [submitted, setSubmitted] = useState(false);
     const [caseId, setCaseId] = useState("");
+    const [mapUrl, setMapUrl] = useState("");
 
     const text = {
-        badge: isHindi ? "त्वरित गाय सहायता" : "Quick Cow Rescue",
+        badge: isHindi
+            ? "त्वरित गाय सहायता"
+            : "Quick Cow Rescue",
 
         title: isHindi
             ? "गाय को तुरंत सहायता चाहिए?"
@@ -27,7 +32,9 @@ const ReportRescue = () => {
             ? "बस लोकेशन, गाय की फोटो और अपना मोबाइल नंबर साझा करें।"
             : "Just share the location, cow photo and your mobile number.",
 
-        location: isHindi ? "गाय की लोकेशन" : "Cow Location",
+        location: isHindi
+            ? "गाय की लोकेशन"
+            : "Cow Location",
 
         useLocation: isHindi
             ? "📍 मेरी वर्तमान लोकेशन इस्तेमाल करें"
@@ -41,13 +48,17 @@ const ReportRescue = () => {
             ? "📍 वर्तमान लोकेशन प्राप्त"
             : "📍 Current location received",
 
-        photo: isHindi ? "गाय की फोटो" : "Cow Photo",
+        photo: isHindi
+            ? "गाय की फोटो"
+            : "Cow Photo",
 
         photoHelp: isHindi
             ? "गाय की वर्तमान स्थिति की फोटो अपलोड करें"
             : "Upload a photo showing the current condition of the cow",
 
-        phone: isHindi ? "मोबाइल नंबर" : "Mobile Number",
+        phone: isHindi
+            ? "मोबाइल नंबर"
+            : "Mobile Number",
 
         phonePlaceholder: isHindi
             ? "10 अंकों का मोबाइल नंबर"
@@ -57,7 +68,9 @@ const ReportRescue = () => {
             ? "छोटा विवरण"
             : "Short Description",
 
-        optional: isHindi ? "(वैकल्पिक)" : "(Optional)",
+        optional: isHindi
+            ? "(वैकल्पिक)"
+            : "(Optional)",
 
         descriptionPlaceholder: isHindi
             ? "जैसे — गाय सड़क पर घायल है..."
@@ -82,6 +95,10 @@ const ReportRescue = () => {
         saveText: isHindi
             ? "कृपया इस Case ID को सुरक्षित रखें।"
             : "Please keep this Case ID safe.",
+
+        mapButton: isHindi
+            ? "🗺️ Map पर Location देखें"
+            : "🗺️ View Location on Map",
 
         locationError: isHindi
             ? "Location प्राप्त नहीं हो सकी। कृपया location permission allow करें या स्थान manually दर्ज करें।"
@@ -108,6 +125,10 @@ const ReportRescue = () => {
             : "📷 Photo selected",
     };
 
+    // ===============================
+    // Handle Input Changes
+    // ===============================
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -117,6 +138,10 @@ const ReportRescue = () => {
         }));
     };
 
+    // ===============================
+    // Get Current Location
+    // ===============================
+
     const handleLocation = () => {
         if (!navigator.geolocation) {
             alert(text.browserError);
@@ -124,20 +149,70 @@ const ReportRescue = () => {
         }
 
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
 
-                const gpsLocation =
-                    "GPS: " +
-                    latitude.toFixed(6) +
-                    ", " +
-                    longitude.toFixed(6);
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+                    );
 
-                setFormData((prev) => ({
-                    ...prev,
-                    location: gpsLocation,
-                }));
+                    if (!response.ok) {
+                        throw new Error(
+                            "Location address not found"
+                        );
+                    }
+
+                    const data = await response.json();
+
+                    const address = data.address || {};
+
+                    const readableLocation = [
+                        address.road,
+                        address.neighbourhood ||
+                            address.suburb,
+                        address.city ||
+                            address.town ||
+                            address.village,
+                        address.state,
+                        address.postcode,
+                    ]
+                        .filter(Boolean)
+                        .join(", ");
+
+                    const finalLocation =
+                        readableLocation ||
+                        `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+
+                    setFormData((prev) => ({
+                        ...prev,
+                        location: finalLocation,
+                        latitude: latitude,
+                        longitude: longitude,
+                    }));
+                } catch (error) {
+                    console.error(
+                        "REVERSE GEOCODING ERROR:",
+                        error
+                    );
+
+                    const gpsLocation =
+                        `GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+
+                    setFormData((prev) => ({
+                        ...prev,
+                        location: gpsLocation,
+                        latitude: latitude,
+                        longitude: longitude,
+                    }));
+
+                    alert(
+                        isHindi
+                            ? "पता प्राप्त नहीं हो सका। GPS location इस्तेमाल की गई है।"
+                            : "Address could not be found. GPS location has been used."
+                    );
+                }
             },
             () => {
                 alert(text.locationError);
@@ -150,6 +225,10 @@ const ReportRescue = () => {
         );
     };
 
+    // ===============================
+    // Handle Photo
+    // ===============================
+
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
 
@@ -159,21 +238,28 @@ const ReportRescue = () => {
         }));
     };
 
+    // ===============================
+    // Submit Rescue Request
+    // ===============================
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const phoneRegex = /^[6-9][0-9]{9}$/;
 
+        // Location validation
         if (!formData.location.trim()) {
             alert(text.locationErrorRequired);
             return;
         }
 
+        // Photo validation
         if (!formData.photo) {
             alert(text.photoError);
             return;
         }
 
+        // Phone validation
         if (!phoneRegex.test(formData.phone)) {
             alert(text.phoneError);
             return;
@@ -182,17 +268,53 @@ const ReportRescue = () => {
         try {
             const formDataToSend = new FormData();
 
-            formDataToSend.append("phone", formData.phone);
-            formDataToSend.append("location", formData.location);
-            formDataToSend.append("description", formData.description);
-            formDataToSend.append("photo", formData.photo);
+            formDataToSend.append(
+                "phone",
+                formData.phone
+            );
 
-            console.log("SENDING RESCUE DATA:", {
-                phone: formData.phone,
-                location: formData.location,
-                description: formData.description,
-                photo: formData.photo.name,
-            });
+            formDataToSend.append(
+                "location",
+                formData.location
+            );
+
+            formDataToSend.append(
+                "latitude",
+                formData.latitude
+            );
+
+            formDataToSend.append(
+                "longitude",
+                formData.longitude
+            );
+
+            formDataToSend.append(
+                "description",
+                formData.description
+            );
+
+            formDataToSend.append(
+                "photo",
+                formData.photo
+            );
+
+            console.log(
+                "SENDING RESCUE DATA:",
+                {
+                    phone: formData.phone,
+                    location: formData.location,
+                    latitude: formData.latitude,
+                    longitude: formData.longitude,
+                    description:
+                        formData.description,
+                    photo:
+                        formData.photo.name,
+                }
+            );
+
+            // ===============================
+            // API Request
+            // ===============================
 
             const response = await fetch(
                 "http://localhost:5000/api/rescue",
@@ -204,37 +326,62 @@ const ReportRescue = () => {
 
             const data = await response.json();
 
-            console.log("BACKEND RESPONSE:", data);
+            console.log(
+                "BACKEND RESPONSE:",
+                data
+            );
+
+            // ===============================
+            // API Error
+            // ===============================
 
             if (!response.ok) {
                 alert(
                     data.message ||
-                    "Rescue request submit नहीं हो सकी।"
+                        "Rescue request submit नहीं हो सकी।"
                 );
+
                 return;
             }
 
-            const generatedCaseId = data.case.case_id;
+            // ===============================
+            // Successful Submission
+            // ===============================
+
+            const generatedCaseId =
+                data.case.case_id;
+
+            const generatedMapUrl =
+                data.case.map_url || "";
 
             setCaseId(generatedCaseId);
+
+            setMapUrl(generatedMapUrl);
+
             setSubmitted(true);
 
-            console.log("RESCUE SAVED:", data);
+            console.log(
+                "RESCUE SAVED:",
+                data
+            );
+
+            // ===============================
+            // Clear Form
+            // ===============================
 
             setFormData({
                 phone: "",
                 location: "",
+                latitude: null,
+                longitude: null,
                 description: "",
                 photo: null,
             });
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-            });
-
         } catch (error) {
-            console.error("RESCUE SUBMIT ERROR:", error);
+            console.error(
+                "RESCUE SUBMIT ERROR:",
+                error
+            );
 
             alert(
                 "Server से connection नहीं हो सका। कृपया थोड़ी देर बाद फिर कोशिश करें।"
@@ -242,32 +389,79 @@ const ReportRescue = () => {
         }
     };
 
+    // ===============================
+    // JSX
+    // ===============================
 
     return (
-        <section className="report-rescue-page" id="report-rescue">
+        <section
+            className="report-rescue-page"
+            id="report-rescue"
+        >
             <div className="report-rescue-container">
 
+                {/* ===============================
+                    HEADER
+                =============================== */}
+
                 <div className="report-rescue-header">
-                    <span>{text.badge}</span>
 
-                    <h1>{text.title}</h1>
+                    <span>
+                        {text.badge}
+                    </span>
 
-                    <p>{text.introDescription}</p>
+                    <h1>
+                        {text.title}
+                    </h1>
+
+                    <p>
+                        {text.introDescription}
+                    </p>
+
                 </div>
+
+                {/* ===============================
+                    SUCCESS MESSAGE
+                =============================== */}
 
                 {submitted && (
                     <div className="report-success">
-                        <h2>{text.successTitle}</h2>
 
-                        <p>{text.successText}</p>
+                        <h2>
+                            {text.successTitle}
+                        </h2>
+
+                        <p>
+                            {text.successText}
+                        </p>
 
                         <strong>
                             {text.caseText} {caseId}
                         </strong>
 
-                        <p>{text.saveText}</p>
+                        <p>
+                            {text.saveText}
+                        </p>
+
+                        {/* MAP BUTTON */}
+
+                        {mapUrl && (
+                            <a
+                                href={mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="map-button"
+                            >
+                                {text.mapButton}
+                            </a>
+                        )}
+
                     </div>
                 )}
+
+                {/* ===============================
+                    RESCUE FORM
+                =============================== */}
 
                 <form
                     className="rescue-report-form"
@@ -275,9 +469,12 @@ const ReportRescue = () => {
                 >
 
                     {/* LOCATION */}
+
                     <div className="form-group">
+
                         <label htmlFor="location">
-                            {text.location} <span>*</span>
+                            {text.location}{" "}
+                            <span>*</span>
                         </label>
 
                         <button
@@ -294,21 +491,28 @@ const ReportRescue = () => {
                             name="location"
                             value={formData.location}
                             onChange={handleChange}
-                            placeholder={text.locationPlaceholder}
+                            placeholder={
+                                text.locationPlaceholder
+                            }
                             required
                         />
 
                         {formData.location && (
                             <small className="location-success">
-                                {text.locationReceived}: {formData.location}
+                                {text.locationReceived}:{" "}
+                                {formData.location}
                             </small>
                         )}
+
                     </div>
 
                     {/* PHOTO */}
+
                     <div className="form-group">
+
                         <label htmlFor="photo">
-                            {text.photo} <span>*</span>
+                            {text.photo}{" "}
+                            <span>*</span>
                         </label>
 
                         <input
@@ -316,23 +520,32 @@ const ReportRescue = () => {
                             type="file"
                             name="photo"
                             accept="image/*"
-                            onChange={handlePhotoChange}
+                            onChange={
+                                handlePhotoChange
+                            }
                             required
                         />
 
-                        <small>{text.photoHelp}</small>
+                        <small>
+                            {text.photoHelp}
+                        </small>
 
                         {formData.photo && (
                             <small className="photo-selected">
-                                {text.photoSelected}: {formData.photo.name}
+                                {text.photoSelected}:{" "}
+                                {formData.photo.name}
                             </small>
                         )}
+
                     </div>
 
                     {/* MOBILE */}
+
                     <div className="form-group">
+
                         <label htmlFor="phone">
-                            {text.phone} <span>*</span>
+                            {text.phone}{" "}
+                            <span>*</span>
                         </label>
 
                         <input
@@ -341,31 +554,45 @@ const ReportRescue = () => {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            placeholder={text.phonePlaceholder}
+                            placeholder={
+                                text.phonePlaceholder
+                            }
                             maxLength="10"
                             pattern="[6-9][0-9]{9}"
                             inputMode="numeric"
                             required
                         />
+
                     </div>
 
                     {/* DESCRIPTION */}
+
                     <div className="form-group">
+
                         <label htmlFor="description">
-                            {text.description} <span>{text.optional}</span>
+                            {text.description}{" "}
+                            <span>
+                                {text.optional}
+                            </span>
                         </label>
 
                         <textarea
                             id="description"
                             name="description"
-                            value={formData.description}
+                            value={
+                                formData.description
+                            }
                             onChange={handleChange}
-                            placeholder={text.descriptionPlaceholder}
+                            placeholder={
+                                text.descriptionPlaceholder
+                            }
                             rows="4"
                         />
+
                     </div>
 
                     {/* SUBMIT */}
+
                     <button
                         type="submit"
                         className="report-submit-button"
@@ -374,6 +601,7 @@ const ReportRescue = () => {
                     </button>
 
                 </form>
+
             </div>
         </section>
     );
