@@ -156,6 +156,7 @@ app.post(
                 latitude,
                 longitude,
                 description,
+                urgency,
             } = req.body;
 
             const photoUrl = req.file

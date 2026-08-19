@@ -13,6 +13,7 @@ const ReportRescue = () => {
         longitude: null,
         description: "",
         photo: null,
+        urgency: "",
     });
 
     const [submitted, setSubmitted] = useState(false);
@@ -67,6 +68,10 @@ const ReportRescue = () => {
         description: isHindi
             ? "छोटा विवरण"
             : "Short Description",
+
+        priorityError: isHindi
+            ? "कृपया सहायता की प्राथमिकता चुनें।"
+            : "Please select a rescue priority.",
 
         optional: isHindi
             ? "(वैकल्पिक)"
@@ -171,10 +176,10 @@ const ReportRescue = () => {
                     const readableLocation = [
                         address.road,
                         address.neighbourhood ||
-                            address.suburb,
+                        address.suburb,
                         address.city ||
-                            address.town ||
-                            address.village,
+                        address.town ||
+                        address.village,
                         address.state,
                         address.postcode,
                     ]
@@ -253,6 +258,13 @@ const ReportRescue = () => {
             return;
         }
 
+        // Priority validation
+
+        if (!formData.urgency) {
+            alert(text.priorityError);
+            return;
+        }
+
         // Photo validation
         if (!formData.photo) {
             alert(text.photoError);
@@ -286,6 +298,11 @@ const ReportRescue = () => {
             formDataToSend.append(
                 "longitude",
                 formData.longitude
+            );
+
+            formDataToSend.append(
+                "urgency",
+                formData.urgency
             );
 
             formDataToSend.append(
@@ -338,7 +355,7 @@ const ReportRescue = () => {
             if (!response.ok) {
                 alert(
                     data.message ||
-                        "Rescue request submit नहीं हो सकी।"
+                    "Rescue request submit नहीं हो सकी।"
                 );
 
                 return;
@@ -375,6 +392,7 @@ const ReportRescue = () => {
                 latitude: null,
                 longitude: null,
                 description: "",
+                urgency: "",
                 photo: null,
             });
         } catch (error) {
